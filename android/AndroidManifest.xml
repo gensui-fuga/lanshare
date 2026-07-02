@@ -12,14 +12,14 @@
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
 
-    <uses-sdk android:minSdkVersion="21" android:targetSdkVersion="34" />
+    <uses-sdk android:minSdkVersion="21" android:targetSdkVersion="33" />
 
     <application
         android:label="LanShare"
         android:icon="@mipmap/ic_launcher"
         android:allowBackup="true"
         android:supportsRtl="true"
-        android:theme="@android:style/Theme.Material.Dark">
+        android:theme="@android:style/Theme">
 
         <activity
             android:name="com.lanshare.MainActivity"
