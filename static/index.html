@@ -1,0 +1,1032 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>LanShare</title>
+<style type="text/css">
+* { margin: 0; padding: 0; box-sizing: border-box; }
+html, body { height: 100%; }
+body {
+    font-family: -apple-system, "Helvetica Neue", Helvetica, Arial, sans-serif;
+    background: #0f0f1a;
+    color: #e0e0e0;
+    font-size: 14px;
+    -webkit-text-size-adjust: 100%;
+}
+
+/* ========== HEADER ========== */
+.header {
+    background: linear-gradient(135deg, #1a1a3e 0%, #2d1b69 100%);
+    padding: 16px 16px 12px 16px;
+    border-bottom: 1px solid #3d2d7e;
+}
+.header-top {
+    display: -webkit-flex;
+    display: flex;
+    -webkit-align-items: center;
+    align-items: center;
+    -webkit-justify-content: space-between;
+    justify-content: space-between;
+}
+.header h1 {
+    font-size: 22px;
+    font-weight: 700;
+    color: #a78bfa;
+}
+.header-badge {
+    background: #7c3aed;
+    color: #fff;
+    font-size: 10px;
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-weight: 600;
+}
+.server-status {
+    display: -webkit-flex;
+    display: flex;
+    -webkit-align-items: center;
+    align-items: center;
+    margin-top: 10px;
+    font-size: 12px;
+    color: #6b7280;
+}
+.status-dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: #22c55e;
+    display: inline-block;
+    margin-right: 6px;
+}
+.status-dot.off { background: #ef4444; }
+
+/* ========== IP BAR ========== */
+.ip-bar {
+    background: linear-gradient(90deg, #1e1b4b, #2e1065);
+    padding: 12px 16px;
+    display: -webkit-flex;
+    display: flex;
+    -webkit-align-items: center;
+    align-items: center;
+    -webkit-justify-content: space-between;
+    justify-content: space-between;
+    border-bottom: 1px solid #3d2d7e;
+}
+.ip-info {
+    font-size: 13px;
+}
+.ip-info .label {
+    color: #6b7280;
+}
+.ip-info .ip {
+    color: #60a5fa;
+    font-weight: 600;
+    font-family: Menlo, monospace;
+}
+.ip-actions {
+    display: -webkit-flex;
+    display: flex;
+    gap: 6px;
+}
+.ip-actions button {
+    background: #2d2d4e;
+    color: #93c5fd;
+    border: 1px solid #3d3d6e;
+    padding: 5px 10px;
+    border-radius: 6px;
+    font-size: 11px;
+    cursor: pointer;
+    -webkit-appearance: none;
+}
+.ip-actions button:active {
+    background: #3d3d6e;
+}
+
+/* ========== TABS ========== */
+.tabs {
+    display: -webkit-flex;
+    display: flex;
+    background: #1a1a3e;
+    border-bottom: 1px solid #2d2d4e;
+    position: -webkit-sticky;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+}
+.tab {
+    -webkit-flex: 1;
+    flex: 1;
+    text-align: center;
+    padding: 12px 8px;
+    font-size: 13px;
+    font-weight: 500;
+    color: #6b7280;
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    -webkit-appearance: none;
+    background: none;
+    border-top: none;
+    border-left: none;
+    border-right: none;
+}
+.tab.active {
+    color: #a78bfa;
+    border-bottom-color: #7c3aed;
+}
+.tab:active {
+    background: #2d2d4e;
+}
+
+/* ========== CONTENT ========== */
+.content {
+    padding: 0;
+}
+.panel {
+    display: none;
+    padding: 12px;
+}
+.panel.active {
+    display: block;
+}
+
+/* ========== FILE MANAGER ========== */
+.fm-header {
+    display: -webkit-flex;
+    display: flex;
+    -webkit-align-items: center;
+    align-items: center;
+    -webkit-justify-content: space-between;
+    justify-content: space-between;
+    margin-bottom: 10px;
+}
+.fm-header h2 {
+    font-size: 15px;
+    color: #a78bfa;
+    font-weight: 600;
+}
+.fm-path {
+    font-size: 11px;
+    color: #6b7280;
+    font-family: Menlo, monospace;
+    background: #1a1a3e;
+    padding: 4px 8px;
+    border-radius: 4px;
+    margin-bottom: 10px;
+    word-break: break-all;
+}
+.fm-actions {
+    display: -webkit-flex;
+    display: flex;
+    gap: 6px;
+}
+.fm-actions button {
+    background: #2d2d4e;
+    color: #e0e0e0;
+    border: none;
+    padding: 6px 12px;
+    border-radius: 6px;
+    font-size: 12px;
+    cursor: pointer;
+    -webkit-appearance: none;
+}
+.fm-actions button:active { background: #3d3d6e; }
+.fm-actions button.primary {
+    background: #7c3aed;
+    color: #fff;
+}
+.fm-actions button.primary:active { background: #6d28d9; }
+.fm-actions button.danger {
+    background: #7f1d1d;
+    color: #fecaca;
+}
+
+/* File list */
+.fm-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+.fm-table th {
+    text-align: left;
+    font-size: 11px;
+    color: #6b7280;
+    padding: 6px 8px;
+    border-bottom: 1px solid #2d2d4e;
+    font-weight: 500;
+}
+.fm-table td {
+    padding: 8px;
+    border-bottom: 1px solid #1a1a3e;
+    vertical-align: middle;
+}
+.fm-table tr:active {
+    background: #1a1a3e;
+}
+.fm-table .fname {
+    display: -webkit-flex;
+    display: flex;
+    -webkit-align-items: center;
+    align-items: center;
+    gap: 8px;
+}
+.fm-table .fname .icon {
+    font-size: 18px;
+    width: 24px;
+    text-align: center;
+}
+.fm-table .fname .name {
+    color: #60a5fa;
+    font-size: 13px;
+    word-break: break-all;
+}
+.fm-table .fsize {
+    color: #9ca3af;
+    font-size: 12px;
+    white-space: nowrap;
+    text-align: right;
+}
+.fm-table .faction {
+    text-align: right;
+    width: 50px;
+}
+.fm-table .faction button {
+    background: none;
+    border: none;
+    color: #ef4444;
+    font-size: 16px;
+    cursor: pointer;
+    padding: 4px;
+    -webkit-appearance: none;
+}
+.fm-table .faction button:active {
+    background: #2d2d4e;
+    border-radius: 4px;
+}
+
+/* Upload area */
+.upload-area {
+    border: 2px dashed #3d3d6e;
+    border-radius: 10px;
+    padding: 16px;
+    text-align: center;
+    margin-bottom: 10px;
+    cursor: pointer;
+}
+.upload-area.dragover {
+    border-color: #7c3aed;
+    background: rgba(124, 58, 237, 0.08);
+}
+.upload-area .icon {
+    font-size: 28px;
+    display: block;
+    margin-bottom: 6px;
+}
+.upload-area .text {
+    font-size: 13px;
+    color: #9ca3af;
+}
+.upload-area .hint {
+    font-size: 11px;
+    color: #6b7280;
+    margin-top: 4px;
+}
+input[type="file"] { display: none; }
+
+/* Progress */
+.progress-wrap {
+    display: none;
+    margin-top: 8px;
+    background: #1a1a3e;
+    padding: 10px;
+    border-radius: 6px;
+}
+.progress-bar {
+    height: 4px;
+    background: #2d2d4e;
+    border-radius: 2px;
+    overflow: hidden;
+}
+.progress-bar .fill {
+    height: 100%;
+    width: 0%;
+    background: linear-gradient(90deg, #7c3aed, #a78bfa);
+    border-radius: 2px;
+    -webkit-transition: width 0.3s;
+    transition: width 0.3s;
+}
+.progress-text {
+    font-size: 11px;
+    color: #9ca3af;
+    margin-top: 4px;
+    text-align: center;
+}
+
+/* Empty */
+.empty-state {
+    text-align: center;
+    padding: 30px 10px;
+    color: #6b7280;
+}
+.empty-state .icon {
+    font-size: 36px;
+    display: block;
+    margin-bottom: 8px;
+}
+.empty-state .text {
+    font-size: 13px;
+}
+.empty-state .sub {
+    font-size: 11px;
+    color: #4b5563;
+    margin-top: 4px;
+}
+
+/* ========== SETTINGS ========== */
+.settings-group {
+    margin-bottom: 16px;
+}
+.settings-group h3 {
+    font-size: 13px;
+    font-weight: 600;
+    color: #a78bfa;
+    margin-bottom: 8px;
+    padding-bottom: 4px;
+    border-bottom: 1px solid #2d2d4e;
+}
+.setting-item {
+    background: #1a1a3e;
+    border-radius: 8px;
+    padding: 12px;
+    margin-bottom: 8px;
+}
+.setting-item .label {
+    font-size: 13px;
+    color: #e0e0e0;
+    display: block;
+    margin-bottom: 4px;
+}
+.setting-item .value {
+    font-size: 12px;
+    color: #6b7280;
+    font-family: Menlo, monospace;
+    word-break: break-all;
+}
+.setting-item .desc {
+    font-size: 11px;
+    color: #4b5563;
+    margin-top: 4px;
+}
+.setting-item input[type="text"] {
+    width: 100%;
+    background: #0f0f1a;
+    border: 1px solid #3d3d6e;
+    color: #e0e0e0;
+    padding: 8px 10px;
+    border-radius: 6px;
+    font-size: 13px;
+    font-family: Menlo, monospace;
+    margin-top: 4px;
+    -webkit-appearance: none;
+}
+.setting-item button {
+    margin-top: 8px;
+    background: #7c3aed;
+    color: #fff;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 6px;
+    font-size: 13px;
+    cursor: pointer;
+    -webkit-appearance: none;
+}
+.setting-item button:active { background: #6d28d9; }
+
+/* Device info */
+.device-grid {
+    display: -webkit-flex;
+    display: flex;
+    -webkit-flex-wrap: wrap;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+.device-card {
+    background: #1a1a3e;
+    border-radius: 8px;
+    padding: 12px;
+    -webkit-flex: 1;
+    flex: 1;
+    min-width: 100px;
+    text-align: center;
+    border: 1px solid #2d2d4e;
+}
+.device-card .val {
+    font-size: 18px;
+    font-weight: 700;
+    color: #a78bfa;
+}
+.device-card .lbl {
+    font-size: 11px;
+    color: #6b7280;
+    margin-top: 4px;
+}
+
+/* ========== TOAST ========== */
+.toast {
+    display: none;
+    position: fixed;
+    top: 12px;
+    left: 50%;
+    width: 90%;
+    max-width: 360px;
+    -webkit-transform: translateX(-50%);
+    transform: translateX(-50%);
+    padding: 10px 14px;
+    border-radius: 8px;
+    font-size: 13px;
+    text-align: center;
+    z-index: 999;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+}
+.toast.show { display: block; }
+.toast.success { background: #065f46; color: #a7f3d0; }
+.toast.error { background: #7f1d1d; color: #fecaca; }
+.toast.info { background: #1e3a5f; color: #93c5fd; }
+
+/* ========== FOOTER ========== */
+.footer {
+    text-align: center;
+    padding: 16px;
+    color: #4b5563;
+    font-size: 11px;
+}
+
+/* Loading */
+.loading {
+    text-align: center;
+    padding: 30px;
+}
+.spinner {
+    display: inline-block;
+    width: 20px; height: 20px;
+    border: 2px solid #2d2d4e;
+    border-top-color: #7c3aed;
+    border-radius: 50%;
+    -webkit-animation: spin 0.7s linear infinite;
+    animation: spin 0.7s linear infinite;
+}
+@-webkit-keyframes spin { to { -webkit-transform: rotate(360deg); } }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* Checkbox */
+input[type="checkbox"] {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 18px; height: 18px;
+    border: 2px solid #3d3d6e;
+    border-radius: 4px;
+    background: #0f0f1a;
+    cursor: pointer;
+    vertical-align: middle;
+}
+input[type="checkbox"]:checked {
+    background: #7c3aed;
+    border-color: #7c3aed;
+}
+</style>
+</head>
+<body>
+
+<div class="header">
+    <div class="header-top">
+        <h1>📁 LanShare</h1>
+        <span class="header-badge">v1.0</span>
+    </div>
+    <div class="server-status">
+        <span class="status-dot" id="statusDot"></span>
+        <span id="statusText">載入中...</span>
+    </div>
+</div>
+
+<div class="ip-bar" id="ipBar">
+    <div class="ip-info">
+        <span class="label">本機 IP: </span>
+        <span class="ip" id="localIP">---</span>
+        <span class="label" style="margin-left:8px;">Port: </span>
+        <span class="ip" id="localPort">---</span>
+    </div>
+    <div class="ip-actions">
+        <button onclick="copyIP()">📋 複製</button>
+        <button onclick="openURL()">🌐 開啟</button>
+    </div>
+</div>
+
+<div class="tabs" id="tabs">
+    <button class="tab active" data-tab="files">📄 檔案</button>
+    <button class="tab" data-tab="upload">📤 上傳</button>
+    <button class="tab" data-tab="settings">⚙️ 設定</button>
+</div>
+
+<div class="content">
+    <!-- ===== FILES TAB ===== -->
+    <div class="panel active" id="panel-files">
+        <div class="fm-header">
+            <h2>📂 檔案管理</h2>
+            <div class="fm-actions">
+                <button onclick="refreshFiles()">🔄 刷新</button>
+            </div>
+        </div>
+        <div class="fm-path" id="fmPath">載入中...</div>
+        <div id="fileContainer">
+            <div class="loading"><div class="spinner"></div></div>
+        </div>
+    </div>
+
+    <!-- ===== UPLOAD TAB ===== -->
+    <div class="panel" id="panel-upload">
+        <h2 style="font-size:15px;color:#a78bfa;margin-bottom:10px;">📤 上傳檔案</h2>
+        <div class="upload-area" id="dropZone">
+            <span class="icon">📁</span>
+            <span class="text">點擊選擇或拖放檔案到此處</span>
+            <span class="hint" id="uploadHint">支援所有檔案類型，單個最大 4GB</span>
+        </div>
+        <input type="file" id="fileInput" multiple>
+        <div style="display:flex;gap:6px;margin-bottom:8px;">
+            <button class="fm-actions primary" id="uploadBtn" disabled style="flex:1;padding:10px;border:none;border-radius:6px;background:#7c3aed;color:#fff;font-size:14px;-webkit-appearance:none;">上傳</button>
+        </div>
+        <div class="progress-wrap" id="progressWrap">
+            <div class="progress-bar"><div class="fill" id="progressFill"></div></div>
+            <div class="progress-text" id="progressText">0%</div>
+        </div>
+        <div id="uploadedList" style="margin-top:10px;"></div>
+    </div>
+
+    <!-- ===== SETTINGS TAB ===== -->
+    <div class="panel" id="panel-settings">
+        <div class="settings-group">
+            <h3>📊 設備資訊</h3>
+            <div class="device-grid">
+                <div class="device-card">
+                    <div class="val" id="sFileCount">-</div>
+                    <div class="lbl">共享檔案</div>
+                </div>
+                <div class="device-card">
+                    <div class="val" id="sTotalSize">-</div>
+                    <div class="lbl">總大小</div>
+                </div>
+                <div class="device-card">
+                    <div class="val" id="sUptime">-</div>
+                    <div class="lbl">運行時間</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="settings-group">
+            <h3>📂 儲存位置</h3>
+            <div class="setting-item">
+                <span class="label">目前共享目錄</span>
+                <div class="value" id="sShareDir">載入中...</div>
+                <div class="desc">伺服器儲存檔案的資料夾路徑</div>
+            </div>
+            <div class="setting-item">
+                <span class="label">主機名稱</span>
+                <div class="value" id="sHostname">-</div>
+            </div>
+            <div class="setting-item">
+                <span class="label">平台</span>
+                <div class="value" id="sPlatform">-</div>
+            </div>
+        </div>
+
+        <div class="settings-group">
+            <h3>🌐 網路</h3>
+            <div class="setting-item">
+                <span class="label">區域網路 IP</span>
+                <div class="value" id="sIP">-</div>
+            </div>
+            <div class="setting-item">
+                <span class="label">連接埠</span>
+                <div class="value" id="sPort">-</div>
+            </div>
+        </div>
+
+        <div class="settings-group">
+            <h3>⚠️ 危險區域</h3>
+            <div class="setting-item">
+                <span class="label">清空所有檔案</span>
+                <div class="desc">刪除共享目錄中的所有檔案</div>
+                <button onclick="clearAllFiles()" style="background:#7f1d1d;color:#fecaca;">🗑️ 清空所有檔案</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="footer">
+    LanShare v1.0 · 區域網路檔案共享 · 純 LAN 無雲端
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script type="text/javascript">
+(function() {
+    var BASE = '';
+    var API = BASE + '/api';
+    var FILE_BASE = BASE + '/f';
+
+    var tabs = document.querySelectorAll('.tab');
+    var panels = {
+        files: document.getElementById('panel-files'),
+        upload: document.getElementById('panel-upload'),
+        settings: document.getElementById('panel-settings')
+    };
+
+    var toastEl = document.getElementById('toast');
+    var toastTimer = null;
+
+    // ===== TAB SWITCHING =====
+    for (var i = 0; i < tabs.length; i++) {
+        tabs[i].addEventListener('click', function() {
+            var tab = this.getAttribute('data-tab');
+            for (var j = 0; j < tabs.length; j++) {
+                tabs[j].classList.remove('active');
+            }
+            this.classList.add('active');
+            for (var p in panels) {
+                panels[p].classList.remove('active');
+            }
+            if (panels[tab]) {
+                panels[tab].classList.add('active');
+            }
+            // Refresh data when switching to settings
+            if (tab === 'settings') {
+                loadServerInfo();
+            }
+        });
+    }
+
+    // ===== TOAST =====
+    function showToast(msg, type) {
+        if (toastTimer) { clearTimeout(toastTimer); }
+        toastEl.textContent = msg;
+        toastEl.className = 'toast show ' + (type || 'info');
+        toastTimer = setTimeout(function() {
+            toastEl.className = 'toast';
+        }, 3000);
+    }
+
+    function formatSize(bytes) {
+        if (bytes === 0) return '0 B';
+        var units = ['B', 'KB', 'MB', 'GB', 'TB'];
+        var i = 0;
+        var size = bytes;
+        while (size >= 1024 && i < units.length - 1) {
+            size /= 1024;
+            i++;
+        }
+        return (i === 0 ? size : size.toFixed(1)) + ' ' + units[i];
+    }
+
+    function formatTime(ts) {
+        if (!ts) return '';
+        try {
+            var d = new Date(ts);
+            var m = ('0' + (d.getMonth()+1)).slice(-2);
+            var day = ('0' + d.getDate()).slice(-2);
+            var h = ('0' + d.getHours()).slice(-2);
+            var min = ('0' + d.getMinutes()).slice(-2);
+            return m + '-' + day + ' ' + h + ':' + min;
+        } catch(e) { return ''; }
+    }
+
+    function escapeHtml(str) {
+        var d = document.createElement('div');
+        d.appendChild(document.createTextNode(str));
+        return d.innerHTML;
+    }
+
+    function getFileIcon(name) {
+        var ext = name.split('.').pop().toLowerCase();
+        var imgExts = ['jpg','jpeg','png','gif','webp','bmp','svg'];
+        var docExts = ['pdf','doc','docx','txt','md','csv'];
+        var zipExts = ['zip','rar','7z','tar','gz','bz2'];
+        var vidExts = ['mp4','avi','mkv','mov','webm'];
+        var audExts = ['mp3','wav','flac','ogg','aac'];
+        if (imgExts.indexOf(ext) >= 0) return '🖼️';
+        if (docExts.indexOf(ext) >= 0) return '📄';
+        if (zipExts.indexOf(ext) >= 0) return '📦';
+        if (vidExts.indexOf(ext) >= 0) return '🎬';
+        if (audExts.indexOf(ext) >= 0) return '🎵';
+        return '📄';
+    }
+
+    // ===== FILE MANAGER =====
+    var allFiles = [];
+
+    function refreshFiles() {
+        var container = document.getElementById('fileContainer');
+        container.innerHTML = '<div class="loading"><div class="spinner"></div></div>';
+
+        var xhr = new XMLHttpRequest();
+        xhr.open('GET', API + '/files', true);
+        xhr.onreadystatechange = function() {
+            if (xhr.readyState !== 4) return;
+            if (xhr.status === 200) {
+                try {
+                    allFiles = JSON.parse(xhr.responseText);
+                    renderFiles(allFiles);
+                } catch(e) {
+                    container.innerHTML = '<div class="empty-state"><span class="icon">⚠️</span><span class="text">回應解析失敗</span></div>';
+                }
+            } else {
+                container.innerHTML = '<div class="empty-state"><span class="icon">⚠️</span><span class="text">無法連接到伺服器</span></div>';
+            }
+        };
+        xhr.send();
+    }
+
+    function renderFiles(files) {
+        var container = document.getElementById('fileContainer');
+        var pathEl = document.getElementById('fmPath');
+
+        if (!files || files.length === 0) {
+            pathEl.textContent = '📂 共享目錄 (空的)';
+            container.innerHTML = '<div class="empty-state"><span class="icon">📂</span><span class="text">暫無檔案</span><div class="sub">切換到「上傳」標籤來上傳檔案</div></div>';
+            return;
+        }
+
+        // Show path from settings or static
+        pathEl.textContent = '📂 共 ' + files.length + ' 個檔案';
+
+        var html = '<table class="fm-table">';
+        html += '<tr><th style="width:40px;"></th><th>檔案名稱</th><th style="width:70px;text-align:right;">大小</th><th style="width:50px;"></th></tr>';
+
+        // Sort by modified time descending
+        files.sort(function(a, b) {
+            return (b.modified || 0) - (a.modified || 0);
+        });
+
+        for (var i = 0; i < files.length; i++) {
+            var f = files[i];
+            var icon = getFileIcon(f.name);
+            var size = f.size_str || formatSize(f.size);
+            html += '<tr>';
+            html += '<td class="fname"><span class="icon">' + icon + '</span></td>';
+            html += '<td class="fname"><a class="name" href="' + FILE_BASE + '/' + encodeURIComponent(f.name) + '" download>' + escapeHtml(f.name) + '</a></td>';
+            html += '<td class="fsize">' + size + '</td>';
+            html += '<td class="faction"><button onclick="deleteFile(\'' + escapeHtml(f.name).replace(/'/g, "\\'") + '\')" title="刪除">✕</button></td>';
+            html += '</tr>';
+        }
+        html += '</table>';
+        container.innerHTML = html;
+    }
+
+    // ===== DELETE FILE =====
+    window.deleteFile = function(name) {
+        if (!confirm('確定刪除 "' + name + '"？')) return;
+
+        var xhr = new XMLHttpRequest();
+        xhr.open('POST', API + '/delete', true);
+        xhr.setRequestHeader('Content-Type', 'application/json');
+        xhr.onreadystatechange = function() {
+            if (xhr.readyState !== 4) return;
+            if (xhr.status === 200) {
+                showToast('✓ 已刪除: ' + name, 'success');
+                refreshFiles();
+                loadServerInfo();
+            } else {
+                showToast('✗ 刪除失敗: ' + name, 'error');
+            }
+        };
+        xhr.send(JSON.stringify({name: name}));
+    };
+
+    // ===== CLEAR ALL FILES =====
+    window.clearAllFiles = function() {
+        if (!confirm('⚠️ 確定要清空所有檔案？\n這個操作無法復原！')) return;
+        if (!confirm('再次確認：刪除所有 ' + allFiles.length + ' 個檔案？')) return;
+
+        var deleted = 0;
+        var failed = 0;
+        var total = allFiles.length;
+
+        function deleteNext(idx) {
+            if (idx >= allFiles.length) {
+                showToast('✓ 已清空 ' + deleted + ' 個檔案' + (failed ? '，' + failed + ' 個失敗' : ''), failed ? 'error' : 'success');
+                refreshFiles();
+                loadServerInfo();
+                return;
+            }
+            var f = allFiles[idx];
+            var xhr = new XMLHttpRequest();
+            xhr.open('POST', API + '/delete', true);
+            xhr.setRequestHeader('Content-Type', 'application/json');
+            xhr.onreadystatechange = function() {
+                if (xhr.readyState !== 4) return;
+                if (xhr.status === 200) {
+                    deleted++;
+                } else {
+                    failed++;
+                }
+                deleteNext(idx + 1);
+            };
+            xhr.send(JSON.stringify({name: f.name}));
+        }
+        deleteNext(0);
+    };
+
+    // ===== UPLOAD =====
+    var fileInput = document.getElementById('fileInput');
+    var dropZone = document.getElementById('dropZone');
+    var uploadBtn = document.getElementById('uploadBtn');
+    var currentFiles = [];
+
+    fileInput.addEventListener('change', function(e) {
+        currentFiles = Array.prototype.slice.call(e.target.files || []);
+        updateUploadUI();
+    });
+
+    dropZone.addEventListener('click', function() {
+        fileInput.click();
+    });
+
+    dropZone.addEventListener('dragover', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        dropZone.classList.add('dragover');
+    });
+
+    dropZone.addEventListener('dragleave', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        dropZone.classList.remove('dragover');
+    });
+
+    dropZone.addEventListener('drop', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        dropZone.classList.remove('dragover');
+        currentFiles = Array.prototype.slice.call(e.dataTransfer.files || []);
+        updateUploadUI();
+    });
+
+    function updateUploadUI() {
+        if (currentFiles.length > 0) {
+            uploadBtn.disabled = false;
+            var names = [];
+            for (var i = 0; i < currentFiles.length; i++) {
+                names.push(currentFiles[i].name);
+            }
+            document.getElementById('uploadHint').textContent = '已選擇: ' + names.join(', ');
+            uploadBtn.textContent = '📤 上傳 ' + names.length + ' 個檔案';
+        } else {
+            uploadBtn.disabled = true;
+            uploadBtn.textContent = '上傳';
+            document.getElementById('uploadHint').textContent = '支援所有檔案類型，單個最大 4GB';
+        }
+    }
+
+    document.getElementById('uploadBtn').addEventListener('click', function() {
+        if (currentFiles.length === 0) return;
+        uploadFiles(currentFiles);
+    });
+
+    function uploadFiles(files) {
+        var formData = new FormData();
+        for (var i = 0; i < files.length; i++) {
+            formData.append('file', files[i]);
+        }
+
+        currentFiles = [];
+        fileInput.value = '';
+        updateUploadUI();
+
+        uploadBtn.disabled = true;
+        uploadBtn.textContent = '⏳ 上傳中...';
+        document.getElementById('progressWrap').style.display = '';
+        document.getElementById('progressFill').style.width = '0%';
+        document.getElementById('progressText').textContent = '0%';
+        document.getElementById('uploadedList').innerHTML = '';
+
+        var xhr = new XMLHttpRequest();
+        xhr.open('POST', API + '/upload', true);
+
+        xhr.upload.onprogress = function(e) {
+            if (e.lengthComputable) {
+                var pct = Math.round((e.loaded / e.total) * 100);
+                document.getElementById('progressFill').style.width = pct + '%';
+                document.getElementById('progressText').textContent = pct + '% (' + formatSize(e.loaded) + ' / ' + formatSize(e.total) + ')';
+            }
+        };
+
+        xhr.onreadystatechange = function() {
+            if (xhr.readyState !== 4) return;
+            uploadBtn.disabled = false;
+            uploadBtn.textContent = '上傳';
+            document.getElementById('progressWrap').style.display = '';
+
+            if (xhr.status === 200) {
+                try {
+                    var res = JSON.parse(xhr.responseText);
+                    var list = res.uploaded || [];
+                    var html = '';
+                    for (var i = 0; i < list.length; i++) {
+                        html += '<div style="padding:6px;background:#065f46;color:#a7f3d0;border-radius:4px;margin-bottom:4px;font-size:13px;">✓ ' + escapeHtml(list[i]) + '</div>';
+                    }
+                    document.getElementById('uploadedList').innerHTML = html;
+                    showToast('✓ ' + list.length + ' 個檔案上傳成功', 'success');
+                } catch(e) {
+                    showToast('✓ 上傳完成', 'success');
+                }
+                refreshFiles();
+                loadServerInfo();
+            } else {
+                showToast('✗ 上傳失敗 (HTTP ' + xhr.status + ')', 'error');
+            }
+        };
+
+        xhr.send(formData);
+    }
+
+    // ===== SERVER INFO & IP =====
+    var serverData = null;
+
+    function loadServerInfo() {
+        var xhr = new XMLHttpRequest();
+        xhr.open('GET', API + '/info', true);
+        xhr.onreadystatechange = function() {
+            if (xhr.readyState !== 4) return;
+            if (xhr.status === 200) {
+                try {
+                    serverData = JSON.parse(xhr.responseText);
+                    updateUI(serverData);
+                } catch(e) {}
+            }
+        };
+        xhr.send();
+    }
+
+    function updateUI(data) {
+        // Status bar
+        document.getElementById('statusDot').className = 'status-dot';
+        document.getElementById('statusText').textContent = '伺服器運行中 · ' + (data.hostname || 'unknown');
+
+        // IP bar
+        if (data.ip) {
+            document.getElementById('localIP').textContent = data.ip;
+        }
+        if (data.port) {
+            document.getElementById('localPort').textContent = data.port;
+        }
+
+        // Settings tab
+        document.getElementById('sShareDir').textContent = data.share_dir || '-';
+        document.getElementById('sHostname').textContent = data.hostname || '-';
+        document.getElementById('sPlatform').textContent = data.platform || '-';
+        document.getElementById('sIP').textContent = data.ip || '-';
+        document.getElementById('sPort').textContent = data.port || '-';
+        document.getElementById('sFileCount').textContent = data.file_count || 0;
+        document.getElementById('sTotalSize').textContent = formatSize(data.total_size || 0);
+        document.getElementById('sUptime').textContent = data.uptime || '-';
+
+        // File path
+        document.getElementById('fmPath').textContent = '📂 ' + (data.share_dir || '共享目錄') + ' (' + (data.file_count || 0) + ' 個檔案)';
+    }
+
+    // ===== CLIPBOARD & OPEN =====
+    window.copyIP = function() {
+        if (!serverData) return;
+        var text = 'http://' + serverData.ip + ':' + serverData.port;
+        var ta = document.createElement('textarea');
+        ta.value = text;
+        document.body.appendChild(ta);
+        ta.select();
+        try {
+            document.execCommand('copy');
+            showToast('✓ 已複製: ' + text, 'success');
+        } catch(e) {
+            showToast('✗ 複製失敗', 'error');
+        }
+        document.body.removeChild(ta);
+    };
+
+    window.openURL = function() {
+        if (!serverData) return;
+        var url = 'http://' + serverData.ip + ':' + serverData.port;
+        window.open(url, '_blank');
+    };
+
+    // ===== INIT =====
+    refreshFiles();
+    loadServerInfo();
+
+    // Auto refresh every 5s on files tab
+    setInterval(function() {
+        var activeTab = document.querySelector('.tab.active');
+        if (activeTab && activeTab.getAttribute('data-tab') === 'files') {
+            refreshFiles();
+        }
+    }, 5000);
+})();
+</script>
+</body>
+</html>

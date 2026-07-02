@@ -1,0 +1,18 @@
+Package: lanshare
+Version: 1.0.0
+Section: net
+Priority: optional
+Architecture: amd64
+Depends: libgl1-mesa-glx (>= 20.0) | libgl1 (>= 1.0), ca-certificates
+Maintainer: gensui-fuga <gensui-fuga@users.noreply.github.com>
+Description: LanShare - Cross-Platform Local Network File Sharing
+ Share files across devices on your local network.
+ .
+ Features:
+  • No internet required - works entirely on LAN
+  • Web UI compatible with all devices (including iPhone 4 / iOS 7)
+  • Desktop GUI with system tray (Fyne)
+  • Drag & drop upload
+  • Auto-discovery via mDNS
+  • Cross-platform: Linux, Windows, macOS, Android, iOS
+Homepage: https://github.com/gensui-fuga/lanshare

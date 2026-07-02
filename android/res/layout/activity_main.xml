@@ -1,0 +1,310 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="#0f0f1a">
+
+    <!-- ===== HEADER ===== -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="56dp"
+        android:background="#1a1a3e"
+        android:gravity="center_vertical"
+        android:paddingLeft="16dp"
+        android:paddingRight="16dp"
+        android:orientation="horizontal">
+
+        <TextView
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="📁 LanShare"
+            android:textSize="20sp"
+            android:textColor="#a78bfa"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/statusText"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="○ 已停止"
+            android:textSize="13sp"
+            android:textColor="#9ca3af" />
+    </LinearLayout>
+
+    <!-- ===== IP BAR ===== -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="44dp"
+        android:background="#1e1b4b"
+        android:gravity="center_vertical"
+        android:paddingLeft="16dp"
+        android:paddingRight="16dp"
+        android:orientation="horizontal">
+
+        <TextView
+            android:id="@+id/ipText"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="IP: ---"
+            android:textSize="13sp"
+            android:textColor="#60a5fa"
+            android:fontFamily="monospace" />
+
+        <TextView
+            android:id="@+id/portText"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Port: ---"
+            android:textSize="13sp"
+            android:textColor="#6b7280"
+            android:fontFamily="monospace" />
+    </LinearLayout>
+
+    <!-- ===== TABS ===== -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="40dp"
+        android:orientation="horizontal"
+        android:background="#1a1a3e">
+
+        <TextView
+            android:id="@+id/tabFiles"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:gravity="center"
+            android:text="📄 檔案"
+            android:textSize="13sp"
+            android:textColor="#a78bfa"
+            android:background="#2d2d4e"
+            android:clickable="true" />
+
+        <TextView
+            android:id="@+id/tabSettings"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:gravity="center"
+            android:text="⚙️ 設定"
+            android:textSize="13sp"
+            android:textColor="#6b7280"
+            android:background="#1a1a3e"
+            android:clickable="true" />
+
+    </LinearLayout>
+
+    <!-- ===== CONTENT ===== -->
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="12dp">
+
+            <!-- ===== FILES TAB CONTENT ===== -->
+            <LinearLayout
+                android:id="@+id/fileListLayout"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical"
+                    android:layout_marginBottom="8dp">
+
+                    <TextView
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="📂 檔案管理"
+                        android:textSize="15sp"
+                        android:textColor="#a78bfa"
+                        android:textStyle="bold" />
+
+                    <Button
+                        android:id="@+id/refreshBtn"
+                        android:layout_width="wrap_content"
+                        android:layout_height="32dp"
+                        android:text="🔄 刷新"
+                        android:textSize="12sp"
+                        android:backgroundTint="#2d2d4e"
+                        android:textColor="#e0e0e0"
+                        android:paddingLeft="12dp"
+                        android:paddingRight="12dp" />
+                </LinearLayout>
+
+                <!-- File list display -->
+                <TextView
+                    android:id="@+id/infoText"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="📂 暫無檔案"
+                    android:textSize="13sp"
+                    android:textColor="#6b7280"
+                    android:lineSpacingExtra="4dp"
+                    android:padding="16dp"
+                    android:background="#1a1a3e"
+                    android:visibility="gone" />
+
+            </LinearLayout>
+
+            <!-- ===== SETTINGS TAB CONTENT ===== -->
+            <LinearLayout
+                android:id="@+id/settingsLayout"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:visibility="gone">
+
+                <!-- Control buttons -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:gravity="center"
+                    android:layout_marginBottom="16dp">
+
+                    <Button
+                        android:id="@+id/startBtn"
+                        android:layout_width="0dp"
+                        android:layout_height="48dp"
+                        android:layout_weight="1"
+                        android:text="▶ 啟動伺服器"
+                        android:textSize="14sp"
+                        android:backgroundTint="#7c3aed"
+                        android:textColor="#ffffff"
+                        android:layout_marginRight="4dp" />
+
+                    <Button
+                        android:id="@+id/stopBtn"
+                        android:layout_width="0dp"
+                        android:layout_height="48dp"
+                        android:layout_weight="1"
+                        android:text="⏹ 停止"
+                        android:textSize="14sp"
+                        android:backgroundTint="#7f1d1d"
+                        android:textColor="#fecaca"
+                        android:layout_marginRight="4dp"
+                        android:visibility="gone" />
+
+                    <Button
+                        android:id="@+id/openBtn"
+                        android:layout_width="0dp"
+                        android:layout_height="48dp"
+                        android:layout_weight="1"
+                        android:text="🌐 開啟"
+                        android:textSize="14sp"
+                        android:backgroundTint="#1e40af"
+                        android:textColor="#93c5fd"
+                        android:layout_marginLeft="4dp" />
+                </LinearLayout>
+
+                <!-- Storage path setting -->
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="📂 儲存位置"
+                    android:textSize="13sp"
+                    android:textColor="#a78bfa"
+                    android:textStyle="bold"
+                    android:layout_marginBottom="6dp" />
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:background="#1a1a3e"
+                    android:orientation="vertical"
+                    android:padding="12dp"
+                    android:layout_marginBottom="16dp">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="檔案儲存目錄路徑"
+                        android:textSize="13sp"
+                        android:textColor="#e0e0e0" />
+
+                    <EditText
+                        android:id="@+id/pathInput"
+                        android:layout_width="match_parent"
+                        android:layout_height="40dp"
+                        android:textSize="12sp"
+                        android:fontFamily="monospace"
+                        android:textColor="#60a5fa"
+                        android:background="#0f0f1a"
+                        android:padding="8dp"
+                        android:layout_marginTop="6dp"
+                        android:singleLine="true" />
+
+                    <Button
+                        android:id="@+id/savePathBtn"
+                        android:layout_width="match_parent"
+                        android:layout_height="36dp"
+                        android:text="💾 儲存路徑"
+                        android:textSize="13sp"
+                        android:backgroundTint="#7c3aed"
+                        android:textColor="#ffffff"
+                        android:layout_marginTop="8dp" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="修改後需重啟伺服器才會生效"
+                        android:textSize="11sp"
+                        android:textColor="#4b5563"
+                        android:layout_marginTop="4dp" />
+                </LinearLayout>
+
+                <!-- How to use -->
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="📱 使用說明"
+                    android:textSize="13sp"
+                    android:textColor="#a78bfa"
+                    android:textStyle="bold"
+                    android:layout_marginBottom="6dp" />
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:background="#1a1a3e"
+                    android:orientation="vertical"
+                    android:padding="12dp"
+                    android:layout_marginBottom="16dp">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="1. 點擊「啟動伺服器」\n2. 同一區域網路的設備打開瀏覽器\n3. 訪問上方顯示的 IP:Port\n4. 上傳/下載檔案\n\n💡 iPhone 4 / 任何舊設備的 Safari 也能用"
+                        android:textSize="13sp"
+                        android:textColor="#9ca3af"
+                        android:lineSpacingExtra="4dp" />
+                </LinearLayout>
+
+            </LinearLayout>
+
+        </LinearLayout>
+    </ScrollView>
+
+    <!-- ===== FOOTER ===== -->
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="LanShare v1.0 · 純 LAN 無雲端"
+        android:textSize="11sp"
+        android:textColor="#4b5563"
+        android:gravity="center"
+        android:padding="12dp" />
+
+</LinearLayout>
