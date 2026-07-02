@@ -8,3 +8,8 @@ dist/android/
 dist/packaging/*.deb
 dist/packaging/lanshare/
 packaging/deb/usr/
+
+# Build artifacts
+android/build/
+mobile-apk/
+dist/android/
