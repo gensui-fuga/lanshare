@@ -1,4 +1,4 @@
-pkgbase = lanshare
+pkgbase = lanshare-bin
 	pkgdesc = Cross-Platform Local Network File Sharing - Share files across devices on your local network. Includes Web UI (iOS 7/iPhone 4 compatible) and Android APK
 	pkgver = 1.0.0
 	pkgrel = 1
@@ -14,4 +14,4 @@ pkgbase = lanshare
 	sha256sums = SKIP
 	sha256sums = SKIP
 
-pkgname = lanshare
+pkgname = lanshare-bin

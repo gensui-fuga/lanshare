@@ -61,7 +61,8 @@ lanshare
 | **macOS (Intel)** | Binary | macOS 10.12+ |
 | **macOS (Apple Silicon)** | Binary | Native M1/M2/M3 |
 | **macOS** | `.app` | Drag to Applications |
-| **Android** | Binary | Termux required |
+| **Android APK** | `.apk` | Standalone, no Termux needed |
+| **Android (Termux)** | Binary | For headless/server use |
 | **iOS** | 🌐 Web UI | Safari on any iOS version |
 
 ## 🖥️ Usage
