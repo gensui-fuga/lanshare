@@ -11,7 +11,6 @@ import (
 )
 
 func main() {
-	// Parse arguments
 	if len(os.Args) > 1 {
 		switch os.Args[1] {
 		case "-h", "--help":
@@ -23,11 +22,17 @@ func main() {
 		}
 	}
 
-	// Set defaults
-	shareDir = os.Getenv("LANSHARE_DIR")
-	if shareDir == "" {
-		shareDir = filepath.Join(os.TempDir(), "lanshare")
+	// Defaults
+	base := filepath.Join(os.TempDir(), "lanshare")
+	uploadDir = os.Getenv("LANSHARE_UPLOAD_DIR")
+	downloadDir = os.Getenv("LANSHARE_DOWNLOAD_DIR")
+	if uploadDir == "" {
+		uploadDir = filepath.Join(base, "uploads")
 	}
+	if downloadDir == "" {
+		downloadDir = filepath.Join(base, "downloads")
+	}
+	bgDir = filepath.Join(base, "bg")
 
 	portStr := os.Getenv("LANSHARE_PORT")
 	port = 8080
@@ -37,15 +42,21 @@ func main() {
 		}
 	}
 
-	// Allow CLI args: lanshare [port] [directory]
+	// CLI: lanshare [port] [dir]   or   lanshare [port] [upload_dir] [download_dir]
 	if len(os.Args) > 1 {
 		if p, err := strconv.Atoi(os.Args[1]); err == nil {
 			port = p
 			if len(os.Args) > 2 {
-				shareDir = os.Args[2]
+				uploadDir = os.Args[2]
+				if len(os.Args) > 3 {
+					downloadDir = os.Args[3]
+				} else {
+					downloadDir = uploadDir
+				}
 			}
 		} else {
-			shareDir = os.Args[1]
+			uploadDir = os.Args[1]
+			downloadDir = os.Args[1]
 			if len(os.Args) > 2 {
 				if p, err := strconv.Atoi(os.Args[2]); err == nil {
 					port = p
@@ -54,11 +65,13 @@ func main() {
 		}
 	}
 
-	// Resolve share directory
-	shareDir, _ = filepath.Abs(shareDir)
-	if err := os.MkdirAll(shareDir, 0755); err != nil {
-		log.Fatalf("Cannot create share directory: %v", err)
-	}
+	// Resolve and create dirs
+	uploadDir, _ = filepath.Abs(uploadDir)
+	downloadDir, _ = filepath.Abs(downloadDir)
+	bgDir = filepath.Join(filepath.Dir(uploadDir), "bg")
+	os.MkdirAll(uploadDir, 0755)
+	os.MkdirAll(downloadDir, 0755)
+	os.MkdirAll(bgDir, 0755)
 
 	actualPort, err := startServer()
 	if err != nil {
@@ -67,18 +80,14 @@ func main() {
 
 	printBanner(actualPort)
 
-	// If LANSHARE_OPEN_BROWSER is set, open browser
 	if os.Getenv("LANSHARE_OPEN_BROWSER") == "1" {
-		ip := getLocalIP()
-		url := fmt.Sprintf("http://%s:%d", ip, actualPort)
+		url := fmt.Sprintf("http://%s:%d", getLocalIP(), actualPort)
 		openBrowser(url)
 	}
 
-	// Wait for signal
 	sig := make(chan os.Signal, 1)
 	signal.Notify(sig, syscall.SIGINT, syscall.SIGTERM)
 	<-sig
-
 	fmt.Println("\nShutting down...")
 }
 
@@ -89,13 +98,9 @@ func printBanner(port int) {
 	fmt.Println("  ║          LanShare v1.0               ║")
 	fmt.Println("  ║    Cross-Platform LAN File Share     ║")
 	fmt.Println("  ╚══════════════════════════════════════╝")
-	fmt.Println()
-	fmt.Printf("  📂 Shared:  %s\n", shareDir)
-	fmt.Printf("  🌐 Server:  http://%s:%d\n", ip, port)
-	fmt.Println()
-	fmt.Println("  📱 Open on any device (including iPhone 4):")
-	fmt.Printf("     http://%s:%d\n", ip, port)
-	fmt.Println()
+	fmt.Printf("\n  📤 Upload:   %s\n", uploadDir)
+	fmt.Printf("  📥 Download: %s\n", downloadDir)
+	fmt.Printf("  🌐 Server:   http://%s:%d\n\n", ip, port)
 	fmt.Println("  ⏹  Ctrl+C to stop")
 	fmt.Println()
 }
@@ -104,14 +109,14 @@ func printHelp() {
 	fmt.Println("LanShare v1.0.0 - Cross-Platform LAN File Sharing")
 	fmt.Println()
 	fmt.Println("Usage:")
-	fmt.Println("  lanshare                  # Port 8080, temp dir")
-	fmt.Println("  lanshare 9000             # Custom port")
-	fmt.Println("  lanshare ./shared         # Custom directory")
-	fmt.Println("  lanshare 9000 ./shared    # Custom port + dir")
+	fmt.Println("  lanshare                           # Port 8080, temp dirs")
+	fmt.Println("  lanshare 9000                      # Custom port")
+	fmt.Println("  lanshare ./shared                  # Single dir for both")
+	fmt.Println("  lanshare 9000 ./uploads ./downloads # Port + separate dirs")
 	fmt.Println()
 	fmt.Println("Environment:")
-	fmt.Println("  LANSHARE_DIR          Share directory")
-	fmt.Println("  LANSHARE_PORT         Port number")
-	fmt.Println("  LANSHARE_OPEN_BROWSER Set to 1 to auto-open browser")
+	fmt.Println("  LANSHARE_UPLOAD_DIR    Upload directory")
+	fmt.Println("  LANSHARE_DOWNLOAD_DIR  Download directory")
+	fmt.Println("  LANSHARE_PORT          Port number")
 	fmt.Println()
 }

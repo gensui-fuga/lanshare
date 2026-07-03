@@ -12,9 +12,9 @@ import (
 	"net"
 	"net/http"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"runtime"
-	"strconv"
 	"strings"
 	"time"
 )
@@ -23,11 +23,13 @@ import (
 var staticFS embed.FS
 
 var (
-	shareDir  string
-	port      int
-	appSecret string
-	startTime = time.Now()
-	hostname  string
+	uploadDir  string
+	downloadDir string
+	bgDir      string
+	port       int
+	appSecret  string
+	startTime  = time.Now()
+	hostname   string
 )
 
 func init() {
@@ -36,8 +38,6 @@ func init() {
 	if err != nil {
 		hostname = "unknown"
 	}
-
-	// Generate random secret for upload tokens
 	b := make([]byte, 8)
 	rand.Read(b)
 	appSecret = hex.EncodeToString(b)
@@ -82,87 +82,76 @@ func sanitizePath(path string) string {
 	return path
 }
 
-// ---------- API Handlers ----------
-
-type FileInfo struct {
-	Name     string `json:"name"`
-	Size     int64  `json:"size"`
-	SizeStr  string `json:"size_str"`
-	Modified int64  `json:"modified"`
-	IsDir    bool   `json:"is_dir"`
-}
-
-type ServerInfo struct {
-	Version   string `json:"version"`
-	Hostname  string `json:"hostname"`
-	IP        string `json:"ip"`
-	Port      int    `json:"port"`
-	ShareDir  string `json:"share_dir"`
-	TotalSize int64  `json:"total_size"`
-	FileCount int    `json:"file_count"`
-	Uptime    string `json:"uptime"`
-	Platform  string `json:"platform"`
+func countFiles(dir string) (int, int64) {
+	var count int
+	var totalSize int64
+	filepath.Walk(dir, func(path string, info os.FileInfo, err error) error {
+		if err != nil || info.IsDir() {
+			return nil
+		}
+		count++
+		totalSize += info.Size()
+		return nil
+	})
+	return count, totalSize
 }
 
 func handleAPIInfo(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
-
-	var totalSize int64
-	var fileCount int
-	filepath.Walk(shareDir, func(path string, info os.FileInfo, err error) error {
-		if err != nil {
-			return nil
-		}
-		if !info.IsDir() {
-			totalSize += info.Size()
-			fileCount++
-		}
-		return nil
+	uc, us := countFiles(uploadDir)
+	dc, ds := countFiles(downloadDir)
+	json.NewEncoder(w).Encode(map[string]interface{}{
+		"version":        "1.0.0",
+		"hostname":       hostname,
+		"ip":             getLocalIP(),
+		"port":           port,
+		"upload_dir":     uploadDir,
+		"download_dir":   downloadDir,
+		"upload_count":   uc,
+		"upload_size":    us,
+		"upload_size_str": formatSize(us),
+		"download_count": dc,
+		"download_size":  ds,
+		"download_size_str": formatSize(ds),
+		"total_count":    uc + dc,
+		"total_size":     us + ds,
+		"total_size_str": formatSize(us + ds),
+		"uptime":         time.Since(startTime).Round(time.Second).String(),
+		"platform":       runtime.GOOS + "/" + runtime.GOARCH,
 	})
-
-	info := ServerInfo{
-		Version:   "1.0.0",
-		Hostname:  hostname,
-		IP:        getLocalIP(),
-		Port:      port,
-		ShareDir:  shareDir,
-		TotalSize: totalSize,
-		FileCount: fileCount,
-		Uptime:    time.Since(startTime).Round(time.Second).String(),
-		Platform:  runtime.GOOS + "/" + runtime.GOARCH,
-	}
-	json.NewEncoder(w).Encode(info)
 }
 
 func handleAPIFiles(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
-
-	entries, err := os.ReadDir(shareDir)
-	if err != nil {
-		http.Error(w, `{"error":"cannot read directory"}`, 500)
-		return
+	dirType := r.URL.Query().Get("type")
+	dir := downloadDir
+	if dirType == "upload" {
+		dir = uploadDir
 	}
 
-	var files []FileInfo
+	entries, err := os.ReadDir(dir)
+	if err != nil {
+		json.NewEncoder(w).Encode([]map[string]interface{}{})
+		return
+	}
+	var files []map[string]interface{}
 	for _, e := range entries {
 		if e.IsDir() {
 			continue
 		}
-		info, err := e.Info()
-		if err != nil {
+		info, _ := e.Info()
+		if info == nil {
 			continue
 		}
-		files = append(files, FileInfo{
-			Name:     e.Name(),
-			Size:     info.Size(),
-			SizeStr:  formatSize(info.Size()),
-			Modified: info.ModTime().UnixMilli(),
-			IsDir:    false,
+		files = append(files, map[string]interface{}{
+			"name":     e.Name(),
+			"size":     info.Size(),
+			"size_str": formatSize(info.Size()),
+			"modified": info.ModTime().UnixMilli(),
 		})
 	}
-
 	if files == nil {
-		files = []FileInfo{}
+		files = []map[string]interface{}{}
 	}
 	json.NewEncoder(w).Encode(files)
 }
@@ -172,95 +161,101 @@ func handleAPIUpload(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "method not allowed", 405)
 		return
 	}
-
-	// Limit to 4GB
 	r.Body = http.MaxBytesReader(w, r.Body, 4<<30)
-
-	err := r.ParseMultipartForm(32 << 20)
-	if err != nil {
+	if err := r.ParseMultipartForm(32 << 20); err != nil {
 		http.Error(w, fmt.Sprintf("parse error: %v", err), 400)
 		return
 	}
 
 	files := r.MultipartForm.File["file"]
-	if len(files) == 0 {
-		http.Error(w, "no file uploaded", 400)
-		return
-	}
-
 	var uploaded []string
 	for _, fh := range files {
 		fname := filepath.Base(fh.Filename)
 		if fname == "" || fname == "." || fname == ".." {
 			continue
 		}
-
-		src, err := fh.Open()
-		if err != nil {
+		src, _ := fh.Open()
+		if src == nil {
 			continue
 		}
 		defer src.Close()
 
-		dst, err := os.Create(filepath.Join(shareDir, fname))
-		if err != nil {
+		dst, _ := os.Create(filepath.Join(uploadDir, fname))
+		if dst == nil {
 			continue
 		}
 		defer dst.Close()
-
-		written, err := io.Copy(dst, src)
-		if err != nil {
-			os.Remove(filepath.Join(shareDir, fname))
-			continue
-		}
-		_ = written
+		io.Copy(dst, src)
 		uploaded = append(uploaded, fname)
 	}
-
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(map[string]interface{}{
-		"uploaded": uploaded,
-		"count":    len(uploaded),
+		"uploaded": uploaded, "count": len(uploaded),
 	})
 }
 
-func handleDownload(w http.ResponseWriter, r *http.Request) {
-	path := strings.TrimPrefix(r.URL.Path, "/f/")
-	path = sanitizePath(path)
-	fullPath := filepath.Join(shareDir, path)
+func handleAPIDelete(w http.ResponseWriter, r *http.Request) {
+	if r.Method != "POST" {
+		http.Error(w, "method not allowed", 405)
+		return
+	}
+	var req struct {
+		Name string `json:"name"`
+		Type string `json:"type"`
+	}
+	json.NewDecoder(r.Body).Decode(&req)
+	req.Name = sanitizePath(req.Name)
 
-	if !strings.HasPrefix(fullPath, shareDir) {
+	dir := downloadDir
+	if req.Type == "upload" {
+		dir = uploadDir
+	}
+	fullPath := filepath.Join(dir, req.Name)
+	if !strings.HasPrefix(fullPath, dir) {
 		http.Error(w, "invalid path", 403)
 		return
 	}
+	os.Remove(fullPath)
+	json.NewEncoder(w).Encode(map[string]string{"status": "ok"})
+}
 
+func handleDownload(w http.ResponseWriter, r *http.Request) {
+	path := sanitizePath(strings.TrimPrefix(r.URL.Path, "/f/"))
+
+	// Try download dir first, then upload dir
+	var fullPath string
+	if _, err := os.Stat(filepath.Join(downloadDir, path)); err == nil {
+		fullPath = filepath.Join(downloadDir, path)
+	} else {
+		fullPath = filepath.Join(uploadDir, path)
+	}
+
+	if !strings.HasPrefix(fullPath, downloadDir) && !strings.HasPrefix(fullPath, uploadDir) {
+		http.Error(w, "invalid path", 403)
+		return
+	}
 	if _, err := os.Stat(fullPath); os.IsNotExist(err) {
 		http.Error(w, "file not found", 404)
 		return
 	}
-
-	fname := filepath.Base(fullPath)
-	w.Header().Set("Content-Disposition", fmt.Sprintf(`attachment; filename="%s"`, fname))
+	w.Header().Set("Content-Disposition", fmt.Sprintf(`attachment; filename="%s"`, filepath.Base(fullPath)))
 	w.Header().Set("Content-Type", "application/octet-stream")
 	w.Header().Set("Accept-Ranges", "bytes")
 	http.ServeFile(w, r, fullPath)
 }
 
 func handleStream(w http.ResponseWriter, r *http.Request) {
-	path := strings.TrimPrefix(r.URL.Path, "/s/")
-	path = sanitizePath(path)
-	fullPath := filepath.Join(shareDir, path)
-
-	if !strings.HasPrefix(fullPath, shareDir) {
-		http.Error(w, "invalid path", 403)
-		return
+	path := sanitizePath(strings.TrimPrefix(r.URL.Path, "/s/"))
+	var fullPath string
+	if _, err := os.Stat(filepath.Join(downloadDir, path)); err == nil {
+		fullPath = filepath.Join(downloadDir, path)
+	} else {
+		fullPath = filepath.Join(uploadDir, path)
 	}
-
 	if _, err := os.Stat(fullPath); os.IsNotExist(err) {
 		http.Error(w, "file not found", 404)
 		return
 	}
-
-	// Detect MIME type by extension
 	ext := strings.ToLower(filepath.Ext(fullPath))
 	mime := "application/octet-stream"
 	switch ext {
@@ -291,49 +286,86 @@ func handleStream(w http.ResponseWriter, r *http.Request) {
 	case ".html", ".htm":
 		mime = "text/html; charset=utf-8"
 	}
-
 	w.Header().Set("Content-Type", mime)
 	w.Header().Set("Accept-Ranges", "bytes")
 	http.ServeFile(w, r, fullPath)
 }
 
-func handleDelete(w http.ResponseWriter, r *http.Request) {
+func handleAPISettings(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	if r.Method == "POST" {
+		var req struct {
+			UploadDir   string `json:"upload_dir"`
+			DownloadDir string `json:"download_dir"`
+		}
+		json.NewDecoder(r.Body).Decode(&req)
+		if req.UploadDir != "" {
+			uploadDir = req.UploadDir
+			os.MkdirAll(uploadDir, 0755)
+		}
+		if req.DownloadDir != "" {
+			downloadDir = req.DownloadDir
+			os.MkdirAll(downloadDir, 0755)
+		}
+	}
+	json.NewEncoder(w).Encode(map[string]interface{}{
+		"upload_dir":   uploadDir,
+		"download_dir": downloadDir,
+	})
+}
+
+func handleUploadBg(w http.ResponseWriter, r *http.Request) {
 	if r.Method != "POST" {
 		http.Error(w, "method not allowed", 405)
 		return
 	}
-
-	var req struct {
-		Name string `json:"name"`
-	}
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		http.Error(w, "invalid request", 400)
+	r.Body = http.MaxBytesReader(w, r.Body, 50<<20) // 50MB max
+	if err := r.ParseMultipartForm(50 << 20); err != nil {
+		http.Error(w, "parse error", 400)
 		return
 	}
-
-	req.Name = sanitizePath(req.Name)
-	fullPath := filepath.Join(shareDir, req.Name)
-	if !strings.HasPrefix(fullPath, shareDir) {
-		http.Error(w, "invalid path", 403)
+	files := r.MultipartForm.File["bg"]
+	if len(files) == 0 {
+		http.Error(w, "no file", 400)
 		return
 	}
-
-	if err := os.Remove(fullPath); err != nil {
-		http.Error(w, fmt.Sprintf("delete failed: %v", err), 500)
+	fh := files[0]
+	ext := strings.ToLower(filepath.Ext(fh.Filename))
+	if ext != ".jpg" && ext != ".jpeg" && ext != ".png" && ext != ".gif" && ext != ".webp" && ext != ".bmp" {
+		http.Error(w, "unsupported format: "+ext, 400)
 		return
 	}
+	src, _ := fh.Open()
+	defer src.Close()
+
+	// Clean old backgrounds
+	old, _ := filepath.Glob(filepath.Join(bgDir, "bg-*"))
+	for _, o := range old {
+		os.Remove(o)
+	}
+
+	bgName := "bg-" + hex.EncodeToString([]byte(time.Now().String()))[:8] + ext
+	dst, _ := os.Create(filepath.Join(bgDir, bgName))
+	defer dst.Close()
+	io.Copy(dst, src)
 
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(map[string]string{"status": "ok"})
+	json.NewEncoder(w).Encode(map[string]interface{}{
+		"status": "ok",
+		"url":    "/bg/" + bgName,
+	})
 }
 
-func handleWebSocket(w http.ResponseWriter, r *http.Request) {
-	// Fallback: just return info
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(map[string]string{"status": "not_available"})
+func handleServeBg(w http.ResponseWriter, r *http.Request) {
+	path := sanitizePath(strings.TrimPrefix(r.URL.Path, "/bg/"))
+	fullPath := filepath.Join(bgDir, path)
+	if _, err := os.Stat(fullPath); os.IsNotExist(err) {
+		http.Error(w, "not found", 404)
+		return
+	}
+	w.Header().Set("Cache-Control", "public, max-age=86400")
+	http.ServeFile(w, r, fullPath)
 }
-
-// ---------- Middleware ----------
 
 func corsMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -348,52 +380,25 @@ func corsMiddleware(next http.Handler) http.Handler {
 	})
 }
 
-func logMiddleware(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		start := time.Now()
-		lrw := &loggingResponseWriter{ResponseWriter: w, statusCode: 200}
-		next.ServeHTTP(lrw, r)
-		log.Printf("%s %s %d %s", r.Method, r.URL.Path, lrw.statusCode, time.Since(start).Round(time.Millisecond))
-	})
-}
-
-type loggingResponseWriter struct {
-	http.ResponseWriter
-	statusCode int
-}
-
-func (lrw *loggingResponseWriter) WriteHeader(code int) {
-	lrw.statusCode = code
-	lrw.ResponseWriter.WriteHeader(code)
-}
-
-// ---------- Server ----------
-
 func startServer() (int, error) {
 	mux := http.NewServeMux()
 
-	// API routes
 	mux.HandleFunc("/api/info", handleAPIInfo)
 	mux.HandleFunc("/api/files", handleAPIFiles)
 	mux.HandleFunc("/api/upload", handleAPIUpload)
-	mux.HandleFunc("/api/delete", handleDelete)
-	mux.HandleFunc("/api/ws", handleWebSocket)
-	mux.HandleFunc("/api/devices", handleAPIDevices)
-
-	// File routes
+	mux.HandleFunc("/api/delete", handleAPIDelete)
+	mux.HandleFunc("/api/settings", handleAPISettings)
+	mux.HandleFunc("/api/upload-bg", handleUploadBg)
 	mux.HandleFunc("/f/", handleDownload)
 	mux.HandleFunc("/s/", handleStream)
+	mux.HandleFunc("/bg/", handleServeBg)
 
-	// Web UI
-	subFS, err := fs.Sub(staticFS, "static")
-	if err != nil {
-		return 0, fmt.Errorf("embed fs error: %v", err)
-	}
+	// Web UI with cache control
+	subFS, _ := fs.Sub(staticFS, "static")
 	fileServer := http.FileServer(http.FS(subFS))
 
-	// Serve index.html for root
 	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		if r.URL.Path == "/" {
+		if r.URL.Path == "/" || r.URL.Path == "/index.html" {
 			data, err := staticFS.ReadFile("static/index.html")
 			if err != nil {
 				http.Error(w, "not found", 404)
@@ -403,42 +408,45 @@ func startServer() (int, error) {
 			w.Write(data)
 			return
 		}
+		w.Header().Set("Cache-Control", "public, max-age=3600")
 		fileServer.ServeHTTP(w, r)
 	})
 
-	handler := logMiddleware(corsMiddleware(mux))
+	handler := corsMiddleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		start := time.Now()
+		lrw := &lrw{rw: w, code: 200}
+		mux.ServeHTTP(lrw, r)
+		log.Printf("%s %s %d %s", r.Method, r.URL.Path, lrw.code, time.Since(start).Round(time.Millisecond))
+	}))
 
-	// Try the specified port, fallback to random
 	listener, err := net.Listen("tcp", fmt.Sprintf(":%d", port))
 	if err != nil {
-		// Port unavailable, try random
 		listener, err = net.Listen("tcp", ":0")
 		if err != nil {
 			return 0, fmt.Errorf("cannot bind: %v", err)
 		}
 	}
-
-	actualPort := listener.Addr().(*net.TCPAddr).Port
-	port = actualPort
+	port = listener.Addr().(*net.TCPAddr).Port
 
 	go func() {
-		log.Printf("LanShare server starting on port %d", actualPort)
-		log.Printf("Share directory: %s", shareDir)
-		log.Printf("Local URL: http://%s:%d", getLocalIP(), actualPort)
-		log.Printf("iPhone 4 compatible web UI at: http://%s:%d", getLocalIP(), actualPort)
-
-		if err := http.Serve(listener, handler); err != nil {
-			log.Fatalf("Server error: %v", err)
-		}
+		log.Printf("LanShare v1.0.0  http://%s:%d", getLocalIP(), port)
+		http.Serve(listener, handler)
 	}()
-
-	return actualPort, nil
+	return port, nil
 }
+
+type lrw struct {
+	rw   http.ResponseWriter
+	code int
+}
+
+func (l *lrw) Header() http.Header         { return l.rw.Header() }
+func (l *lrw) Write(b []byte) (int, error) { return l.rw.Write(b) }
+func (l *lrw) WriteHeader(c int)           { l.code = c; l.rw.WriteHeader(c) }
 
 func openBrowser(url string) {
 	var cmd string
 	var args []string
-
 	switch runtime.GOOS {
 	case "windows":
 		cmd = "rundll32"
@@ -446,28 +454,9 @@ func openBrowser(url string) {
 	case "darwin":
 		cmd = "open"
 		args = []string{url}
-	default: // linux
+	default:
 		cmd = "xdg-open"
 		args = []string{url}
 	}
-
-	if cmd != "" {
-		proc, err := os.StartProcess(cmd, append([]string{cmd}, args...), &os.ProcAttr{})
-		if err == nil {
-			proc.Release()
-		}
-	}
-}
-
-// Device discovery handler
-func handleAPIDevices(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json")
-	devices := []map[string]string{
-		{
-			"name": hostname,
-			"ip":   getLocalIP(),
-			"port": strconv.Itoa(port),
-		},
-	}
-	json.NewEncoder(w).Encode(devices)
+	exec.Command(cmd, args...).Start()
 }
