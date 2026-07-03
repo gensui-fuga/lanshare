@@ -1,15 +1,8 @@
 lanshare
 lanshare-gui
 *.exe
-dist/linux/
-dist/windows/lanshare.exe
-dist/darwin/
-dist/android/
-dist/packaging/*.deb
-dist/packaging/lanshare/
-packaging/deb/usr/
-
-# Build artifacts
+dist/
 android/build/
+.android/
 mobile-apk/
-dist/android/
+*.log

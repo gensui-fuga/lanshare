@@ -1,3 +1,0 @@
-module lanshare-mobile
-
-go 1.26.4
