@@ -2,35 +2,46 @@
 
 > Cross-Platform Local Network File Sharing — **Works on iPhone 4 (iOS 7) too**
 
-[![Build Status](https://github.com/gensui-fuga/lanshare/actions/workflows/release.yml/badge.svg)](https://github.com/gensui-fuga/lanshare/actions)
 [![License: GPLv3](https://img.shields.io/badge/License-GPLv3-blue.svg)](LICENSE)
+[![AUR](https://img.shields.io/aur/version/lanshare-bin)](https://aur.archlinux.org/packages/lanshare-bin)
 [![Go Version](https://img.shields.io/badge/Go-1.21%2B-00ADD8)](https://go.dev/)
 
 LanShare is a lightweight, zero-configuration file sharing tool that works entirely on your local network. **No internet required. No accounts. No cloud.**
 
 ## 🌟 Features
 
-- **📱 iPhone 4 (iOS 7) Compatible** — Specially designed Web UI works on old Safari
-- **🖥️ Cross-Platform** — Windows, Linux, macOS, Android (Termux), iOS (Safari)
-- **🎨 Desktop GUI** — Native system tray app with Fyne (optional)
-- **📤 Drag & Drop** — Upload files from any device
-- **🔒 Local Only** — Files never leave your LAN. No data leaves your network.
+- **📱 iPhone 4 (iOS 7) Compatible** — Web UI works on old Safari, no app install needed
+- **🤖 Standalone Android APK** — Native UI with file manager, no Termux required
+- **🖥️ Cross-Platform** — Windows, Linux, macOS, Android APK, Android Termux, iOS Safari
+- **📂 Built-in File Manager** — Upload, download, delete files from any device
+- **⚙️ Configurable Storage** — Change save location from the settings panel
+- **🌐 IP Display** — Shows your LAN IP at the top of every interface
+- **🔒 Local Only** — Files never leave your LAN. No cloud, no tracking.
 - **⚡ Zero Config** — Download, run, share. That's it.
-- **🌐 Web UI** — No installation needed on client devices
 
 ## 🚀 Quick Start
 
-### Desktop (Windows / Linux / macOS)
+### 🤖 Android (APK)
+
+Download from [Releases](https://github.com/gensui-fuga/lanshare/releases):
+
+```bash
+# Install via ADB
+adb install LanShare-1.0.0.apk
+# Or just tap the APK on your phone
+```
+
+Open the app → tap **啟動伺服器** → open browser on any device → visit the shown IP.
+
+### 🖥️ Desktop (Windows / Linux / macOS)
 
 ```bash
 # Download from Releases, then:
 ./lanshare
-
 # Open http://localhost:8080 in your browser
-# Or share the LAN IP with other devices
 ```
 
-### iPhone 4 / iPad 2 / Any iOS Device
+### 📱 iPhone 4 / iPad 2 / Any iOS Device
 
 1. Run LanShare on **any computer** in your home
 2. Open **Safari** on your iPhone 4
@@ -39,31 +50,39 @@ LanShare is a lightweight, zero-configuration file sharing tool that works entir
 
 > ✅ **Works on iOS 7.1.2** — no app installation, no jailbreak needed
 
-### Android (Termux)
+### 🐧 Arch Linux
 
 ```bash
-pkg install wget
-wget https://github.com/gensui-fuga/lanshare/releases/latest/download/lanshare-android-arm64
-chmod +x lanshare-android-arm64
-mv lanshare-android-arm64 $PREFIX/bin/lanshare
+yay -S lanshare-bin
 lanshare
 ```
 
-## 📦 Downloads
+## 📥 Downloads
 
-| Platform | Format | Notes |
-|----------|--------|-------|
-| **Linux x86_64** | Binary | Portable, no dependencies |
-| **Linux ARM64** | Binary | Raspberry Pi, etc. |
-| **Linux** | `.deb` | Debian / Ubuntu / Mint |
-| **Linux** | PKGBUILD | Arch Linux (AUR soon) |
-| **Windows** | `.exe` | Portable, no install needed |
-| **macOS (Intel)** | Binary | macOS 10.12+ |
-| **macOS (Apple Silicon)** | Binary | Native M1/M2/M3 |
-| **macOS** | `.app` | Drag to Applications |
-| **Android APK** | `.apk` | Standalone, no Termux needed |
-| **Android (Termux)** | Binary | For headless/server use |
-| **iOS** | 🌐 Web UI | Safari on any iOS version |
+Download from **[GitHub Releases](https://github.com/gensui-fuga/lanshare/releases)**:
+
+| Platform | File | Notes |
+|----------|------|-------|
+| **🤖 Android** | `LanShare-1.0.0.apk` | Standalone APK, native UI, no Termux |
+| **🐧 Linux x86_64** | `lanshare-linux-amd64` | Portable binary |
+| **🐧 Linux ARM64** | (build from source) | Raspberry Pi, etc. |
+| **🪟 Windows** | `lanshare-windows-amd64.exe` | Portable, no install |
+| **🍎 macOS Intel** | `lanshare-darwin-amd64` | macOS 10.12+ |
+| **🍎 macOS Apple Silicon** | `lanshare-darwin-arm64` | Native M1/M2/M3 |
+| **📱 iOS** | — | Use Web UI via Safari |
+
+### AUR
+
+```bash
+yay -S lanshare-bin
+```
+
+### Debian / Ubuntu
+
+```bash
+# From Releases, download and install:
+sudo dpkg -i lanshare_1.0.0_amd64.deb
+```
 
 ## 🖥️ Usage
 
@@ -78,9 +97,6 @@ lanshare 9000
 
 # Custom shared directory
 lanshare ~/shared
-
-# Both
-lanshare 9000 ~/shared
 ```
 
 ### Environment Variables
@@ -90,48 +106,68 @@ LANSHARE_DIR=~/shared LANSHARE_PORT=9090 lanshare
 LANSHARE_OPEN_BROWSER=1 lanshare  # Auto-open browser
 ```
 
-### Desktop GUI (Fyne)
+### Settings via Web UI
 
-```bash
-# Build with GUI support
-go build -tags gui -o lanshare-gui .
-./lanshare-gui
-```
+Open `http://localhost:8080` in any browser:
 
-The GUI version provides:
-- System tray icon with context menu
-- File list with auto-refresh
-- Server status display
-- One-click "Open in Browser"
-- Copy LAN URL to clipboard
+| Tab | Features |
+|-----|----------|
+| 📄 **檔案** | File list, delete, auto-refresh |
+| 📤 **上傳** | Drag & drop, progress bar, multi-file |
+| ⚙️ **設定** | IP info, file count, uptime, storage path |
 
-## 🐧 Arch Linux
+## 📱 Android APK Features
 
-```bash
-# From AUR (once published)
-yay -S lanshare
-
-# Or build from PKGBUILD
-cd packaging/arch
-makepkg -si
-```
-
-## 📱 Screenshots
+The standalone APK (`LanShare-1.0.0.apk`) provides:
 
 ```
-📱 iPhone 4 (iOS 7.1.2) Web UI:
+┌──────────────────────────┐
+│  📁 LanShare    ○ 已停止  │
+├──────────────────────────┤
+│  IP: 192.168.1.5  8080   │
+├──────────────────────────┤
+│  📄 檔案  │  ⚙️ 設定     │
+├──────────────────────────┤
+│  📂 檔案管理              │
+│  🖼️ photo.jpg   1.2 MB   │
+│  📄 report.pdf  2.4 MB   │
+│  📦 backup.zip  156 MB   │
+├──────────────────────────┤
+│  [▶ 啟動伺服器]  [🌐 開啟]│
+└──────────────────────────┘
+```
 
-┌────────────────────────┐
-│   📁 LanShare          │
-├────────────────────────┤
-│ 📤 上傳檔案             │
-│ [選擇檔案] [上傳]       │
-├────────────────────────┤
-│ 📥 檔案列表             │
-│ report.pdf    2.4 MB   │
-│ photo.jpg     1.2 MB   │
-│ backup.zip    156 MB   │
-└────────────────────────┘
+- **No Termux required** — works standalone
+- **Configurable storage** — change save path in settings
+- **IP display** — shows your LAN IP at all times
+- **Background service** — runs even when you switch apps
+- **Notification** — shows server status in notification bar
+
+## Web UI (iOS 7 / iPhone 4)
+
+The Web UI is specifically designed for old browsers:
+
+- **ES5 only** — no modern JavaScript, works on iOS 7 Safari
+- **Table layout** — no flexbox, reliable on old rendering engines
+- **Dark theme** — easy on the eyes, consistent look
+- **Full functionality** — file manager, upload, settings, all from the browser
+
+## 🔧 Architecture
+
+```
+┌─────────────┐     ┌──────────────┐     ┌─────────────┐
+│  iPhone 4   │     │   Android    │     │  Desktop    │
+│  (Safari)   │     │  (APK / Web) │     │  (Native)   │
+└──────┬──────┘     └──────┬───────┘     └──────┬──────┘
+       │                   │                    │
+       └───────────────────┼────────────────────┘
+                           │
+                    ┌──────▼──────┐
+                    │  LanShare   │
+                    │  Server     │
+                    │  (:8080)    │
+                    └─────────────┘
+                    Shared Directory
 ```
 
 ## 🏗️ Building from Source
@@ -146,38 +182,34 @@ go build -o lanshare .
 # Cross-compile all platforms
 ./build/build-all.sh
 
-# Build .deb package
-./build/build-deb.sh
+# Build Android APK (requires gomobile)
+./build/build-apk.sh
 ```
 
 ### Prerequisites
 
 - Go 1.21+
-- For GUI: `fyne.io/fyne/v2` + system OpenGL libraries
-- For .deb: `dpkg-deb`
-- For Windows installer: NSIS (optional)
+- For GUI: `fyne.io/fyne/v2` + system OpenGL
+- For Android APK: `gomobile` + Android NDK
 
-## 🔧 Architecture
+## 📦 Packages
 
-```
-┌─────────────┐     ┌──────────────┐     ┌─────────────┐
-│  iPhone 4   │     │   Android    │     │  Desktop    │
-│  (Safari)   │     │  (Termux)    │     │  (Native)   │
-└──────┬──────┘     └──────┬───────┘     └──────┬──────┘
-       │                   │                    │
-       └───────────────────┼────────────────────┘
-                           │
-                    ┌──────▼──────┐
-                    │  LanShare   │
-                    │  Server     │
-                    │ (:8080)     │
-                    └─────────────┘
-                    Shared Directory
-```
+| Package | Command |
+|---------|---------|
+| **Arch Linux (AUR)** | `yay -S lanshare-bin` |
+| **Debian/Ubuntu** | `sudo dpkg -i lanshare_1.0.0_amd64.deb` |
 
-## 🤝 Contributing
+## 🗺️ Roadmap
 
-PRs welcome! See [issues](https://github.com/gensui-fuga/lanshare/issues) for ideas.
+- [x] Cross-platform CLI server
+- [x] Web UI (iOS 7 compatible)
+- [x] Standalone Android APK with native UI
+- [x] Desktop GUI (Fyne)
+- [x] AUR package
+- [ ] macOS .dmg installer
+- [ ] Windows NSIS installer
+- [ ] iOS native app (requires macOS + Xcode)
+- [ ] mDNS auto-discovery
 
 ## 📄 License
 
@@ -185,7 +217,7 @@ GNU General Public License v3.0
 
 ## 🙏 Credits
 
-- [Fyne](https://fyne.io/) - GUI toolkit
+- [Fyne](https://fyne.io/) — Desktop GUI toolkit
 - Inspired by [LocalSend](https://github.com/localsend/localsend)
 
 ---
